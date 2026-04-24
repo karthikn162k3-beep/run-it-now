@@ -555,39 +555,55 @@
             });
         });
 
-        // ---- Stacking Cards Pile Effect ----
+        // ---- Executive Scroll Stack Effect ----
         const stackContainers = document.querySelectorAll('.stack-container');
-        window.addEventListener('scroll', () => {
+        const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+        const updateScrollStacks = () => {
             stackContainers.forEach(container => {
-                const items = container.querySelectorAll('.stack-item');
-                items.forEach((item, index) => {
-                    const baseTop = 120; // Matches CSS
-                    const stagger = index * 30; // Offset for each card
-                    const targetTop = baseTop + stagger;
-                    
-                    item.style.top = targetTop + 'px';
-                    item.style.zIndex = 100 + index;
+                const items = Array.from(container.querySelectorAll('.stack-item'));
+                const containerRect = container.getBoundingClientRect();
+                const scrollRange = Math.max(1, container.offsetHeight - window.innerHeight);
+                const progress = clamp((window.innerHeight * 0.55 - containerRect.top) / scrollRange, 0, 1);
+                const activeIndex = clamp(Math.round(progress * (items.length - 1)), 0, items.length - 1);
 
-                    const rect = item.getBoundingClientRect();
-                    if (rect.top <= targetTop + 2) {
-                        item.classList.add('is-stuck');
-                        // Apply depth effects to items below this one in the stack
-                        for(let i=0; i < index; i++) {
-                            const prevItem = items[i];
-                            const diff = index - i;
-                            const scale = 1 - (diff * 0.04);
-                            const brightness = 1 - (diff * 0.1);
-                            prevItem.style.transform = `scale(${scale}) translateY(${-diff * 5}px)`;
-                            prevItem.style.filter = `brightness(${brightness})`;
-                        }
-                    } else {
-                        item.classList.remove('is-stuck');
-                        item.style.transform = 'scale(1) translateY(0)';
-                        item.style.filter = 'brightness(1)';
+                container.style.setProperty('--stack-progress', progress.toFixed(3));
+                container.style.setProperty('--active-card', activeIndex);
+
+                items.forEach((item, index) => {
+                    const depth = index - activeIndex;
+                    const isPast = depth < 0;
+                    const isActive = index === activeIndex;
+                    const topOffset = window.innerWidth < 768 ? 96 : 118 + (index * 16);
+                    const card = item.querySelector('.product-card, .service-card');
+
+                    item.style.top = topOffset + 'px';
+                    item.style.zIndex = String(100 + index);
+                    item.classList.toggle('is-active', isActive);
+                    item.classList.toggle('is-past', isPast);
+                    item.classList.toggle('is-stuck', item.getBoundingClientRect().top <= topOffset + 4);
+
+                    if (card) {
+                        const lift = isActive ? 0 : isPast ? -18 - Math.abs(depth) * 5 : 44 + depth * 18;
+                        const tilt = isActive ? 0 : isPast ? -3 - Math.abs(depth) : 10 + depth * 3;
+                        const scale = isActive ? 1 : clamp(1 - Math.abs(depth) * 0.055, 0.82, 0.96);
+                        const opacity = isActive ? 1 : clamp(1 - Math.abs(depth) * 0.18, 0.42, 0.78);
+                        const saturation = isActive ? 1.08 : clamp(1 - Math.abs(depth) * 0.13, 0.58, 0.88);
+
+                        card.style.setProperty('--stack-lift', lift + 'px');
+                        card.style.setProperty('--stack-tilt', tilt + 'deg');
+                        card.style.setProperty('--stack-scale', scale.toFixed(3));
+                        card.style.setProperty('--stack-opacity', opacity.toFixed(3));
+                        card.style.setProperty('--stack-saturation', saturation.toFixed(3));
+                        card.style.setProperty('--stack-glow', isActive ? '1' : '0');
+                        card.style.setProperty('--spot-x', (38 + progress * 34).toFixed(1) + '%');
+                        card.style.setProperty('--spot-y', (12 + Math.abs(depth) * 8).toFixed(1) + '%');
                     }
                 });
             });
-        });
+        };
+        updateScrollStacks();
+        window.addEventListener('scroll', updateScrollStacks, { passive: true });
+        window.addEventListener('resize', updateScrollStacks);
 
         // ---- Reveal 3D Observer ----
         const reveal3D = document.querySelectorAll('.reveal-3d-grid');
