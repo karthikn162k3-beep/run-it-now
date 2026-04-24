@@ -1582,9 +1582,25 @@ ul {
 
 /* --- Responsive Adjustments for Stacking --- */
 @media (max-width: 768px) {
+    .stack-container {
+        max-width: 100%;
+        padding-top: 2vh;
+        padding-bottom: 16vh;
+    }
+
+    .stack-container::before,
+    .stack-container::after {
+        display: none;
+    }
+
     .stack-item {
-        top: 100px;
-        margin-bottom: 10vh;
+        top: 96px;
+        margin-bottom: 12vh;
+    }
+
+    .stack-item .product-card,
+    .stack-item .service-card {
+        min-height: auto;
     }
 }
 }
