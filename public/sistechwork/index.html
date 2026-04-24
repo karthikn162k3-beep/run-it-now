@@ -595,6 +595,7 @@
                     const isActive = index === activeIndex;
                     const topOffset = window.innerWidth < 768 ? 96 : 118 + (index * 16);
                     const card = item.querySelector('.product-card, .service-card');
+                    const isServiceSplit = container.classList.contains('service-split-stack');
 
                     item.style.top = topOffset + 'px';
                     item.style.zIndex = String(100 + index);
@@ -608,6 +609,10 @@
                         const scale = isActive ? 1 : clamp(1 - Math.abs(depth) * 0.055, 0.82, 0.96);
                         const opacity = 1;
                         const saturation = isActive ? 1.08 : clamp(1 - Math.abs(depth) * 0.04, 0.9, 1);
+                        const direction = index % 2 === 0 ? -1 : 1;
+                        const splitProgress = clamp(1 - Math.abs(depth) * 0.72, 0, 1);
+                        const splitShift = isServiceSplit ? direction * (1 - splitProgress) * 135 : 0;
+                        const splitRotate = isServiceSplit ? direction * (1 - splitProgress) * 7 : 0;
 
                         card.style.setProperty('--stack-lift', lift + 'px');
                         card.style.setProperty('--stack-tilt', tilt + 'deg');
@@ -617,6 +622,10 @@
                         card.style.setProperty('--stack-glow', isActive ? '1' : '0');
                         card.style.setProperty('--spot-x', (38 + progress * 34).toFixed(1) + '%');
                         card.style.setProperty('--spot-y', (12 + Math.abs(depth) * 8).toFixed(1) + '%');
+                        card.style.setProperty('--split-progress', splitProgress.toFixed(3));
+                        card.style.setProperty('--split-shift', splitShift.toFixed(1) + 'px');
+                        card.style.setProperty('--split-rotate', splitRotate.toFixed(2) + 'deg');
+                        card.style.setProperty('--service-direction', direction);
                     }
                 });
             });
