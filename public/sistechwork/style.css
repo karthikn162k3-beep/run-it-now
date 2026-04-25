@@ -1663,7 +1663,7 @@ ul {
     }
 
     .stack-item {
-        top: 96px;
+        top: calc(50vh - 50%);
         margin-bottom: 12vh;
     }
 
