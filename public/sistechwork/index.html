@@ -15,9 +15,23 @@
     <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
-    <!-- Custom Cursor -->
+    <!-- Custom Cursor (Aurora) -->
+    <div class="cursor-aurora" aria-hidden="true">
+        <svg class="cursor-arc" viewBox="0 0 100 100">
+            <defs>
+                <linearGradient id="cursorGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#0066FF"/>
+                    <stop offset="50%" stop-color="#8B5CF6"/>
+                    <stop offset="100%" stop-color="#EC4899"/>
+                </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="46" fill="none" stroke="url(#cursorGrad)" stroke-width="1.5" stroke-dasharray="60 220" stroke-linecap="round"/>
+        </svg>
+        <div class="cursor-orb"></div>
+        <div class="cursor-label"><span></span></div>
+    </div>
     <div class="cursor-dot" aria-hidden="true"></div>
-    <div class="cursor-ring" aria-hidden="true"></div>
+    <canvas class="cursor-trail" aria-hidden="true"></canvas>
     <header class="site-header">
         <div class="container">
             <nav class="nav-container">
@@ -678,50 +692,144 @@
         window.addEventListener('scroll', updateRail, { passive: true });
         window.addEventListener('resize', updateRail);
 
-        // ---- Custom Cursor ----
+        // ---- Custom Cursor (Aurora) ----
+        const cursorAurora = document.querySelector('.cursor-aurora');
         const cursorDot = document.querySelector('.cursor-dot');
-        const cursorRing = document.querySelector('.cursor-ring');
+        const cursorLabel = document.querySelector('.cursor-label span');
+        const trailCanvas = document.querySelector('.cursor-trail');
         const isFinePointer = window.matchMedia('(pointer: fine)').matches;
-        if (cursorDot && cursorRing && isFinePointer) {
+
+        if (cursorAurora && cursorDot && trailCanvas && isFinePointer) {
+            // Canvas setup for particle trail
+            const ctx = trailCanvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const sizeCanvas = () => {
+                trailCanvas.width = window.innerWidth * dpr;
+                trailCanvas.height = window.innerHeight * dpr;
+                trailCanvas.style.width = window.innerWidth + 'px';
+                trailCanvas.style.height = window.innerHeight + 'px';
+                ctx.scale(dpr, dpr);
+            };
+            sizeCanvas();
+            window.addEventListener('resize', () => {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                sizeCanvas();
+            });
+
             let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
-            let ringX = mouseX, ringY = mouseY;
+            let lastX = mouseX, lastY = mouseY;
+            let auroraX = mouseX, auroraY = mouseY;
             let dotX = mouseX, dotY = mouseY;
+            const particles = [];
 
             document.addEventListener('mousemove', (e) => {
                 mouseX = e.clientX;
                 mouseY = e.clientY;
+                cursorAurora.classList.remove('is-hidden');
                 cursorDot.classList.remove('is-hidden');
-                cursorRing.classList.remove('is-hidden');
+                trailCanvas.classList.remove('is-hidden');
             });
             document.addEventListener('mouseleave', () => {
+                cursorAurora.classList.add('is-hidden');
                 cursorDot.classList.add('is-hidden');
-                cursorRing.classList.add('is-hidden');
+                trailCanvas.classList.add('is-hidden');
             });
-            document.addEventListener('mousedown', () => cursorRing.classList.add('is-down'));
-            document.addEventListener('mouseup', () => cursorRing.classList.remove('is-down'));
+
+            document.addEventListener('mousedown', () => {
+                cursorAurora.classList.add('is-down');
+                cursorDot.classList.add('is-down');
+                // Spawn ripple
+                const ripple = document.createElement('div');
+                ripple.className = 'cursor-ripple';
+                ripple.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%) scale(0.4)`;
+                // Override translate via top/left for keyframe compatibility
+                ripple.style.left = mouseX + 'px';
+                ripple.style.top = mouseY + 'px';
+                document.body.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 750);
+            });
+            document.addEventListener('mouseup', () => {
+                cursorAurora.classList.remove('is-down');
+                cursorDot.classList.remove('is-down');
+            });
+
+            const palette = ['rgba(0,102,255,', 'rgba(139,92,246,', 'rgba(236,72,153,'];
 
             const animateCursor = () => {
-                // Dot follows tightly
-                dotX += (mouseX - dotX) * 0.55;
-                dotY += (mouseY - dotY) * 0.55;
-                // Ring lags smoothly
-                ringX += (mouseX - ringX) * 0.18;
-                ringY += (mouseY - ringY) * 0.18;
-                cursorDot.style.transform = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
-                cursorRing.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+                // Velocity for trail spawning
+                const vx = mouseX - lastX;
+                const vy = mouseY - lastY;
+                const speed = Math.hypot(vx, vy);
+                lastX = mouseX; lastY = mouseY;
+
+                // Smooth follow
+                dotX += (mouseX - dotX) * 0.65;
+                dotY += (mouseY - dotY) * 0.65;
+                auroraX += (mouseX - auroraX) * 0.16;
+                auroraY += (mouseY - auroraY) * 0.16;
+
+                cursorDot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0) translate(-50%, -50%)`;
+                cursorAurora.style.transform = `translate3d(${auroraX}px, ${auroraY}px, 0) translate(-50%, -50%)` +
+                    (cursorAurora.classList.contains('is-down') ? ' scale(0.85)' : '');
+
+                // Spawn particles based on speed
+                if (speed > 2 && !cursorAurora.classList.contains('is-hover')) {
+                    const count = Math.min(3, Math.floor(speed / 6) + 1);
+                    for (let i = 0; i < count; i++) {
+                        particles.push({
+                            x: mouseX + (Math.random() - 0.5) * 6,
+                            y: mouseY + (Math.random() - 0.5) * 6,
+                            vx: (Math.random() - 0.5) * 0.6,
+                            vy: (Math.random() - 0.5) * 0.6,
+                            life: 1,
+                            size: 2 + Math.random() * 3,
+                            color: palette[Math.floor(Math.random() * palette.length)]
+                        });
+                    }
+                }
+
+                // Render trail
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.022;
+                    if (p.life <= 0) { particles.splice(i, 1); continue; }
+                    ctx.beginPath();
+                    ctx.fillStyle = p.color + (p.life * 0.55).toFixed(3) + ')';
+                    ctx.shadowColor = p.color + '0.8)';
+                    ctx.shadowBlur = 8;
+                    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+
                 requestAnimationFrame(animateCursor);
             };
             animateCursor();
 
-            // Hover state on interactive elements
-            const hoverTargets = 'a, button, .btn, input, textarea, [role="button"], .product-card, .service-card, .stack-item, .service-reveal-item, .tech-pill, .ps-card';
+            // Hover state — morph into labeled capsule
+            const setHoverLabel = (el) => {
+                let label = el.getAttribute('data-cursor');
+                if (!label) {
+                    if (el.matches('a, [role="button"]')) label = 'View →';
+                    else if (el.matches('button, .btn')) label = 'Click →';
+                    else if (el.matches('input, textarea')) label = 'Type';
+                    else label = 'Explore →';
+                }
+                cursorLabel.textContent = label;
+            };
+
+            const hoverTargets = 'a, button, .btn, input, textarea, [role="button"], .product-card, .service-card, .service-reveal-item, .tech-pill, .ps-card, [data-cursor]';
             document.querySelectorAll(hoverTargets).forEach(el => {
                 el.addEventListener('mouseenter', () => {
-                    cursorRing.classList.add('is-hover');
+                    setHoverLabel(el);
+                    cursorAurora.classList.add('is-hover');
                     cursorDot.classList.add('is-hover');
                 });
                 el.addEventListener('mouseleave', () => {
-                    cursorRing.classList.remove('is-hover');
+                    cursorAurora.classList.remove('is-hover');
                     cursorDot.classList.remove('is-hover');
                 });
             });
