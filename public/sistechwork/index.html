@@ -692,6 +692,22 @@
         window.addEventListener('scroll', updateRail, { passive: true });
         window.addEventListener('resize', updateRail);
 
+        // ---- Per-card scroll progress (drives parallax + drift) ----
+        const updateServiceProgress = () => {
+            const vh = window.innerHeight;
+            serviceItems.forEach(item => {
+                const r = item.getBoundingClientRect();
+                const center = r.top + r.height / 2;
+                // -1 (below viewport) → 0 (centered) → 1 (above viewport)
+                let p = (vh / 2 - center) / (vh / 2 + r.height / 2);
+                if (p < -1) p = -1; else if (p > 1) p = 1;
+                item.style.setProperty('--scroll-prog', p.toFixed(3));
+            });
+        };
+        updateServiceProgress();
+        window.addEventListener('scroll', updateServiceProgress, { passive: true });
+        window.addEventListener('resize', updateServiceProgress);
+
         // ---- Custom Cursor (Aurora) ----
         const cursorAurora = document.querySelector('.cursor-aurora');
         const cursorDot = document.querySelector('.cursor-dot');
