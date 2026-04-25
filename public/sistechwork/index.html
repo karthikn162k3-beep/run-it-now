@@ -226,7 +226,7 @@
                 <div class="service-reveal-stage">
                     <div class="service-reveal-rail" aria-hidden="true"><span class="service-reveal-progress"></span></div>
                     <!-- Service 1 -->
-                    <div class="service-reveal-item magnetic-wrap" data-side="left" data-index="01">
+                    <div class="service-reveal-item magnetic-wrap" data-side="left" data-index="01" data-anim="slide-tilt">
                         <div class="magnetic-inner">
                             <div class="service-card split-service-card" style="margin: 0; max-width: 100%;">
                                 <div class="service-split-panel service-split-visual">
@@ -248,7 +248,7 @@
                     </div>
 
                     <!-- Service 2 -->
-                    <div class="service-reveal-item magnetic-wrap" data-side="right" data-index="02">
+                    <div class="service-reveal-item magnetic-wrap" data-side="right" data-index="02" data-anim="zoom-blur">
                         <div class="magnetic-inner">
                             <div class="service-card split-service-card" style="margin: 0; max-width: 100%;">
                                 <div class="service-split-panel service-split-visual">
@@ -270,7 +270,7 @@
                     </div>
 
                     <!-- Service 3 -->
-                    <div class="service-reveal-item magnetic-wrap" data-side="left" data-index="03">
+                    <div class="service-reveal-item magnetic-wrap" data-side="left" data-index="03" data-anim="flip-up">
                         <div class="magnetic-inner">
                             <div class="service-card split-service-card" style="margin: 0; max-width: 100%;">
                                 <div class="service-split-panel service-split-visual">
@@ -292,7 +292,7 @@
                     </div>
 
                     <!-- Service 4 -->
-                    <div class="service-reveal-item magnetic-wrap" data-side="right" data-index="04">
+                    <div class="service-reveal-item magnetic-wrap" data-side="right" data-index="04" data-anim="rotate-swing">
                         <div class="magnetic-inner">
                             <div class="service-card split-service-card" style="margin: 0; max-width: 100%;">
                                 <div class="service-split-panel service-split-visual">
@@ -691,6 +691,22 @@
         updateRail();
         window.addEventListener('scroll', updateRail, { passive: true });
         window.addEventListener('resize', updateRail);
+
+        // ---- Per-card scroll progress (drives parallax + drift) ----
+        const updateServiceProgress = () => {
+            const vh = window.innerHeight;
+            serviceItems.forEach(item => {
+                const r = item.getBoundingClientRect();
+                const center = r.top + r.height / 2;
+                // -1 (below viewport) → 0 (centered) → 1 (above viewport)
+                let p = (vh / 2 - center) / (vh / 2 + r.height / 2);
+                if (p < -1) p = -1; else if (p > 1) p = 1;
+                item.style.setProperty('--scroll-prog', p.toFixed(3));
+            });
+        };
+        updateServiceProgress();
+        window.addEventListener('scroll', updateServiceProgress, { passive: true });
+        window.addEventListener('resize', updateServiceProgress);
 
         // ---- Custom Cursor (Aurora) ----
         const cursorAurora = document.querySelector('.cursor-aurora');
