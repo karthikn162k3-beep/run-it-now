@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
+    <!-- Custom Cursor -->
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
     <header class="site-header">
         <div class="container">
             <nav class="nav-container">
@@ -206,9 +209,10 @@
                 <h2 class="section-title reveal reveal-up">Core Services</h2>
                 <p class="section-subtitle reveal reveal-up delay-1">Custom engineering, from concept to deployment.</p>
 
-                <div class="stack-container service-split-stack hide-grid-on-desktop">
+                <div class="service-reveal-stage">
+                    <div class="service-reveal-rail" aria-hidden="true"><span class="service-reveal-progress"></span></div>
                     <!-- Service 1 -->
-                    <div class="stack-item service-stack-item magnetic-wrap">
+                    <div class="service-reveal-item magnetic-wrap" data-side="left" data-index="01">
                         <div class="magnetic-inner">
                             <div class="service-card split-service-card" style="margin: 0; max-width: 100%;">
                                 <div class="service-split-panel service-split-visual">
@@ -230,7 +234,7 @@
                     </div>
 
                     <!-- Service 2 -->
-                    <div class="stack-item service-stack-item magnetic-wrap">
+                    <div class="service-reveal-item magnetic-wrap" data-side="right" data-index="02">
                         <div class="magnetic-inner">
                             <div class="service-card split-service-card" style="margin: 0; max-width: 100%;">
                                 <div class="service-split-panel service-split-visual">
@@ -252,7 +256,7 @@
                     </div>
 
                     <!-- Service 3 -->
-                    <div class="stack-item service-stack-item magnetic-wrap">
+                    <div class="service-reveal-item magnetic-wrap" data-side="left" data-index="03">
                         <div class="magnetic-inner">
                             <div class="service-card split-service-card" style="margin: 0; max-width: 100%;">
                                 <div class="service-split-panel service-split-visual">
@@ -274,7 +278,7 @@
                     </div>
 
                     <!-- Service 4 -->
-                    <div class="stack-item service-stack-item magnetic-wrap">
+                    <div class="service-reveal-item magnetic-wrap" data-side="right" data-index="04">
                         <div class="magnetic-inner">
                             <div class="service-card split-service-card" style="margin: 0; max-width: 100%;">
                                 <div class="service-split-panel service-split-visual">
@@ -645,6 +649,83 @@
             });
         }, { threshold: 0.15 });
         reveal3D.forEach(el => reveal3DObserver.observe(el));
+
+        // ---- Core Services: Staggered Reveal Stage ----
+        const serviceItems = document.querySelectorAll('.service-reveal-item');
+        const serviceObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-revealed');
+                    serviceObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.25, rootMargin: '0px 0px -80px 0px' });
+        serviceItems.forEach(el => serviceObserver.observe(el));
+
+        // ---- Rail Progress ----
+        const stage = document.querySelector('.service-reveal-stage');
+        const rail = document.querySelector('.service-reveal-rail');
+        const updateRail = () => {
+            if (!stage || !rail) return;
+            const rect = stage.getBoundingClientRect();
+            const vh = window.innerHeight;
+            const total = rect.height + vh * 0.6;
+            const seen = clamp(vh - rect.top, 0, total);
+            const pct = (seen / total) * 100;
+            rail.style.setProperty('--rail-progress', pct.toFixed(1) + '%');
+        };
+        updateRail();
+        window.addEventListener('scroll', updateRail, { passive: true });
+        window.addEventListener('resize', updateRail);
+
+        // ---- Custom Cursor ----
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorRing = document.querySelector('.cursor-ring');
+        const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+        if (cursorDot && cursorRing && isFinePointer) {
+            let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+            let ringX = mouseX, ringY = mouseY;
+            let dotX = mouseX, dotY = mouseY;
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                cursorDot.classList.remove('is-hidden');
+                cursorRing.classList.remove('is-hidden');
+            });
+            document.addEventListener('mouseleave', () => {
+                cursorDot.classList.add('is-hidden');
+                cursorRing.classList.add('is-hidden');
+            });
+            document.addEventListener('mousedown', () => cursorRing.classList.add('is-down'));
+            document.addEventListener('mouseup', () => cursorRing.classList.remove('is-down'));
+
+            const animateCursor = () => {
+                // Dot follows tightly
+                dotX += (mouseX - dotX) * 0.55;
+                dotY += (mouseY - dotY) * 0.55;
+                // Ring lags smoothly
+                ringX += (mouseX - ringX) * 0.18;
+                ringY += (mouseY - ringY) * 0.18;
+                cursorDot.style.transform = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
+                cursorRing.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+                requestAnimationFrame(animateCursor);
+            };
+            animateCursor();
+
+            // Hover state on interactive elements
+            const hoverTargets = 'a, button, .btn, input, textarea, [role="button"], .product-card, .service-card, .stack-item, .service-reveal-item, .tech-pill, .ps-card';
+            document.querySelectorAll(hoverTargets).forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    cursorRing.classList.add('is-hover');
+                    cursorDot.classList.add('is-hover');
+                });
+                el.addEventListener('mouseleave', () => {
+                    cursorRing.classList.remove('is-hover');
+                    cursorDot.classList.remove('is-hover');
+                });
+            });
+        }
     })();
     </script>
 </body>

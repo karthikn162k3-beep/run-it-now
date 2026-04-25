@@ -1690,5 +1690,248 @@ ul {
         padding: 2rem;
         transform: translateY(calc(var(--split-shift, 0px) * 0.35)) rotateX(var(--split-rotate, 0deg));
     }
+    }
 }
+
+/* ============================================
+   CORE SERVICES — REVEAL STAGE (replaces sticky stack)
+   ============================================ */
+.service-reveal-stage {
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 0 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+}
+
+.service-reveal-rail {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    transform: translateX(-50%);
+    background: linear-gradient(to bottom, transparent, rgba(0, 102, 255, 0.12) 10%, rgba(139, 92, 246, 0.18) 50%, rgba(0, 102, 255, 0.12) 90%, transparent);
+    border-radius: 2px;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.service-reveal-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: var(--rail-progress, 0%);
+    background: linear-gradient(to bottom, #0066FF, #8B5CF6, #EC4899);
+    box-shadow: 0 0 20px rgba(0, 102, 255, 0.6);
+    border-radius: 2px;
+    transition: height 0.2s linear;
+}
+
+.service-reveal-item {
+    position: relative;
+    width: 58%;
+    opacity: 0;
+    transform: translateX(var(--enter-x, -80px)) translateY(40px) scale(0.97);
+    transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, opacity;
+}
+
+.service-reveal-item[data-side="left"] {
+    align-self: flex-start;
+    --enter-x: -90px;
+}
+
+.service-reveal-item[data-side="right"] {
+    align-self: flex-end;
+    --enter-x: 90px;
+}
+
+.service-reveal-item.is-revealed {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+}
+
+/* Connector dot on the rail */
+.service-reveal-item::before {
+    content: attr(data-index);
+    position: absolute;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    border: 2px solid rgba(0, 102, 255, 0.25);
+    color: var(--color-primary);
+    font-weight: 800;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+    transform: translateY(-50%) scale(0);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s;
+    z-index: 3;
+}
+
+.service-reveal-item[data-side="left"]::before {
+    right: -78px;
+}
+
+.service-reveal-item[data-side="right"]::before {
+    left: -78px;
+}
+
+.service-reveal-item.is-revealed::before {
+    transform: translateY(-50%) scale(1);
+}
+
+/* Connector horizontal line from rail to card */
+.service-reveal-item::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(to right, rgba(0, 102, 255, 0.5), transparent);
+    transform: translateY(-50%) scaleX(0);
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+    z-index: 2;
+}
+
+.service-reveal-item[data-side="left"]::after {
+    right: -60px;
+    transform-origin: left center;
+}
+
+.service-reveal-item[data-side="right"]::after {
+    left: -60px;
+    background: linear-gradient(to left, rgba(0, 102, 255, 0.5), transparent);
+    transform-origin: right center;
+}
+
+.service-reveal-item.is-revealed::after {
+    transform: translateY(-50%) scaleX(1);
+}
+
+/* Override the split-card layout — keep grid but reset transforms */
+.service-reveal-item .split-service-card {
+    transform: none !important;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.08);
+    transition: box-shadow 0.4s ease, border-color 0.4s ease, transform 0.4s ease;
+    min-height: auto !important;
+}
+
+.service-reveal-item .service-split-panel {
+    transform: none !important;
+}
+
+.service-reveal-item:hover .split-service-card {
+    box-shadow: 0 30px 80px rgba(0, 102, 255, 0.18);
+    border-color: rgba(0, 102, 255, 0.28);
+}
+
+@media (max-width: 900px) {
+    .service-reveal-item,
+    .service-reveal-item[data-side="left"],
+    .service-reveal-item[data-side="right"] {
+        width: 100%;
+        align-self: stretch;
+        --enter-x: -40px;
+    }
+    .service-reveal-rail { display: none; }
+    .service-reveal-item::before,
+    .service-reveal-item::after { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .service-reveal-item {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* ============================================
+   CUSTOM CURSOR
+   ============================================ */
+.cursor-dot,
+.cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 99999;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    will-change: transform, width, height, background, border-color;
+    mix-blend-mode: normal;
+}
+
+.cursor-dot {
+    width: 8px;
+    height: 8px;
+    background: #0066FF;
+    transition: width 0.2s ease, height 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 0 12px rgba(0, 102, 255, 0.6);
+}
+
+.cursor-ring {
+    width: 38px;
+    height: 38px;
+    border: 1.5px solid rgba(0, 102, 255, 0.5);
+    transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                height 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.25s ease,
+                background 0.25s ease,
+                opacity 0.2s ease;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+/* Hover state on interactive elements */
+.cursor-ring.is-hover {
+    width: 64px;
+    height: 64px;
+    border-color: rgba(139, 92, 246, 0.7);
+    background: rgba(139, 92, 246, 0.08);
+}
+
+.cursor-dot.is-hover {
+    width: 4px;
+    height: 4px;
+    background: #8B5CF6;
+}
+
+.cursor-ring.is-down {
+    width: 28px;
+    height: 28px;
+    border-color: #EC4899;
+}
+
+.cursor-dot.is-hidden,
+.cursor-ring.is-hidden {
+    opacity: 0;
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+    .cursor-dot, .cursor-ring { display: none; }
+    body, a, button { cursor: auto !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cursor-dot, .cursor-ring { display: none; }
+}
+
+/* Hide native cursor only on devices that support fine pointer */
+@media (pointer: fine) {
+    body { cursor: none; }
+    a, button, input, textarea, [role="button"], .btn { cursor: none; }
 }
