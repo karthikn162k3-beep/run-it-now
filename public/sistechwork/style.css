@@ -1009,7 +1009,9 @@ ul {
 }
 
 .techstack-inner {
-    background: linear-gradient(135deg, #0a0a0a 0%, #1e293b 100%);
+    background:
+        linear-gradient(135deg, rgba(10, 10, 10, 0.82) 0%, rgba(30, 41, 59, 0.78) 100%),
+        url('assets/images/techstack_bg.jpg') center/cover no-repeat;
     border-radius: 48px;
     padding: 4rem 3rem;
     text-align: center;
