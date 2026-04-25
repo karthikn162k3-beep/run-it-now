@@ -1527,10 +1527,11 @@ ul {
 .stack-item {
     position: sticky !important;
     position: -webkit-sticky !important;
-    top: 118px;
+    /* Center the stuck card vertically in the viewport */
+    top: calc(50vh - 230px);
     margin-bottom: 18vh;
     transition: filter 0.45s ease, opacity 0.45s ease;
-    transform-origin: center top;
+    transform-origin: center center;
     will-change: transform, filter, opacity;
 }
 
@@ -1662,7 +1663,7 @@ ul {
     }
 
     .stack-item {
-        top: 96px;
+        top: calc(50vh - 50%);
         margin-bottom: 12vh;
     }
 
